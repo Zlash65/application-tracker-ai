@@ -26,6 +26,8 @@ export default function RootLayout({ children }) {
             enableSystem
             disableTransitionOnChange
           >
+            <div className="grid-background" />
+
             {/* header */}
             <Header />
 

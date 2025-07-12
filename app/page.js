@@ -1,11 +1,13 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import { industries } from "@/data/industries";
+import { getUserOnboardingStatus } from "@/actions/user";
 
-export default function Home() {
-  return (
-    <div>
-      <div className="grid-background">
-        Work in progress...
-      </div>
-    </div>
-  );
+export default async function OnboardingPage() {
+  const { isOnboarded } = await getUserOnboardingStatus();
+
+  if (isOnboarded) {
+    redirect("/dashboard");
+  } else {
+    redirect("/onboarding");
+  }
 }
