@@ -26,13 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { TagInput } from "emblor";
 import useFetch from "@/hooks/use-fetch";
 import { onboardingSchema } from "@/app/lib/schema";
 import { updateUser } from "@/actions/user";
 
 const OnboardingForm = ({ industries }) => {
   const router = useRouter();
-  const [selectedIndustry, setSelectedIndustry] = useState(null);
 
   const {
     loading: updateLoading,
@@ -50,15 +51,19 @@ const OnboardingForm = ({ industries }) => {
     resolver: zodResolver(onboardingSchema),
   });
 
+  const [selectedIndustry, setSelectedIndustry] = useState(null);
+  const [selectedSubIndustries, setSelectedSubIndustries] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [activeSkillIndex, setActiveSkillIndex] = useState(null);
+
+  useEffect(() => {
+    setValue("subIndustries", selectedSubIndustries);
+  }, [selectedSubIndustries, setValue]);
+
   const onSubmit = async (values) => {
     try {
-      const formattedIndustry = `${values.industry}-${values.subIndustry
-        .toLowerCase()
-        .replace(/ /g, "-")}`;
-
       await updateUserFn({
-        ...values,
-        industry: formattedIndustry,
+        ...values
       });
     } catch (error) {
       console.error("Onboarding error:", error);
@@ -96,7 +101,7 @@ const OnboardingForm = ({ industries }) => {
                   setSelectedIndustry(
                     industries.find((ind) => ind.id === value)
                   );
-                  setValue("subIndustry", "");
+                  setValue("subIndustries", "");
                 }}
               >
                 <SelectTrigger id="industry">
@@ -121,34 +126,24 @@ const OnboardingForm = ({ industries }) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="subIndustry">Specialization</Label>
-              <Select
-                onValueChange={(value) => setValue("subIndustry", value)}
-                disabled={!watchIndustry}
-              >
-                <SelectTrigger id="subIndustry" disabled={!watchIndustry}>
-                  <SelectValue
-                    placeholder={
-                      watchIndustry
-                        ? "Select your specialization"
-                        : "Select industry first"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Specializations</SelectLabel>
-                    {selectedIndustry?.subIndustries.map((sub) => (
-                      <SelectItem key={sub} value={sub}>
-                        {sub}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {errors.subIndustry && (
-                <p className="text-sm text-red-500">{errors.subIndustry.message}</p>
-              )}
+              <Label htmlFor="subIndustries">Specialization</Label>
+            <MultiSelect
+              options={
+                selectedIndustry?.subIndustries.map((sub) => ({
+                  label: sub,
+                  value: sub,
+                })) ?? []
+              }
+              defaultValue={[]}
+              placeholder={
+                !watchIndustry ? "Select industry first" : "Select specializations"
+              }
+              onValueChange={(vals) => setSelectedSubIndustries(vals)}
+              disabled={!watchIndustry}
+            />
+            {errors.subIndustries && (
+              <p className="text-sm text-red-500">{errors.subIndustries.message}</p>
+            )}
             </div>
 
             <div className="space-y-2">
@@ -170,14 +165,17 @@ const OnboardingForm = ({ industries }) => {
 
             <div className="space-y-2">
               <Label htmlFor="skills">Skills</Label>
-              <Input
-                id="skills"
-                placeholder="e.g., Python, JavaScript, Project Management"
-                {...register("skills")}
+              <TagInput
+                tags={skills}
+                setTags={(newTags) => {
+                  setSkills(newTags);
+                  setValue("skills", newTags.map((tag) => tag.text));
+                }}
+                activeTagIndex={activeSkillIndex}
+                setActiveTagIndex={setActiveSkillIndex}
+                placeholder="Enter a skill and press Enter"
               />
-              <p className="text-sm text-muted-foreground">
-                Separate multiple skills with commas
-              </p>
+
               {errors.skills && (
                 <p className="text-sm text-red-500">{errors.skills.message}</p>
               )}

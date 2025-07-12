@@ -23,9 +23,14 @@ export async function updateUser(data) {
           },
           data: {
             industry: data.industry,
+            subIndustries: {
+              set: data.subIndustries
+            },
             experience: data.experience,
             bio: data.bio,
-            skills: data.skills,
+            skills: {
+              set: data.skills
+            }
           },
         });
 

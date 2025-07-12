@@ -14,11 +14,12 @@ model User {
   firstName   String?
   lastName    String?
   imageUrl    String?
-  industry    String?
 
-  bio         String?
-  experience  Int?
-  skills      String[]
+  bio           String?
+  experience    Int?
+  skills        String[]
+  industry      String?
+  subIndustries String[]
 
   assessments Assessment[]
   resume      Resume?

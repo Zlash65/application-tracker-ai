@@ -4,9 +4,11 @@ export const onboardingSchema = z.object({
   industry: z.string({
     required_error: "Please select an industry",
   }),
-  subIndustry: z.string({
-    required_error: "Please select a specialization",
-  }),
+  subIndustries: z
+    .array(z.string(), {
+      required_error: "Please select at least one specialization",
+    })
+    .min(1, "Please select at least one specialization"),
   bio: z.string().max(500).optional(),
   experience: z
     .string()
@@ -17,12 +19,9 @@ export const onboardingSchema = z.object({
         .min(0, "Experience must be at least 0 years")
         .max(50, "Experience cannot exceed 50 years")
     ),
-  skills: z.string().transform((val) =>
-    val
-      ? val
-          .split(",")
-          .map((skill) => skill.trim())
-          .filter(Boolean)
-      : undefined
-  ),
+  skills: z
+    .array(z.string(), {
+      required_error: "Please select at least one skill",
+    })
+    .min(1, "Please select at least one skill")
 });
