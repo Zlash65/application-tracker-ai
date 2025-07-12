@@ -42,7 +42,7 @@ const Header = async () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/ai-cover-letter"
+                    href="/cover-letter"
                     className="flex items-center gap-2"
                   >
                     <PenBox className="h-4 w-4" />
