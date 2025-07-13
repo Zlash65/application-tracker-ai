@@ -26,9 +26,10 @@ import { resumeSchema } from "@/app/lib/schema";
 import html2pdf from "html2pdf.js/dist/html2pdf.min.js";
 import { TagInput } from "emblor";
 
-export default function ResumeBuilder({ initialContent }) {
+export default function ResumeBuilder({ initialContent, onSave }) {
   const [activeTab, setActiveTab] = useState("edit");
   const [previewContent, setPreviewContent] = useState(initialContent);
+  const [resumeName, setResumeName] = useState(initialContent?.name || "Untitled Resume");
   const { user } = useUser();
   const [resumeMode, setResumeMode] = useState("preview");
 
@@ -59,10 +60,6 @@ export default function ResumeBuilder({ initialContent }) {
 
   // Watch form fields for preview updates
   const formValues = watch();
-
-  useEffect(() => {
-    if (initialContent) setActiveTab("preview");
-  }, [initialContent]);
 
   // Update preview content when form values change
   useEffect(() => {
@@ -135,15 +132,14 @@ export default function ResumeBuilder({ initialContent }) {
     }
   };
 
-  const onSubmit = async (data) => {
+  const handleSave = async (contentToSave = previewContent) => {
     try {
-      const formattedContent = previewContent
-        .replace(/\n/g, "\n") // Normalize newlines
-        .replace(/\n\s*\n/g, "\n\n") // Normalize multiple newlines to double newlines
-        .trim();
-
-      console.log(previewContent, formattedContent);
-      await saveResumeFn(previewContent);
+      // If onSave prop is provided, use it (for new resume creation)
+      if (onSave) {
+        await onSave({content: contentToSave, name: resumeName});
+      } else {
+        await saveResumeFn({content: contentToSave, id: initialContent?.id, name: resumeName});
+      }
     } catch (error) {
       console.error("Save error:", error);
     }
@@ -151,52 +147,67 @@ export default function ResumeBuilder({ initialContent }) {
 
   return (
     <div data-color-mode="light" className="space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-2">
-        <h1 className="font-bold gradient-title text-5xl md:text-6xl">
-          Resume Builder
-        </h1>
-        <div className="space-x-2">
-          <Button
-            variant="destructive"
-            onClick={handleSubmit(onSubmit)}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Save
-              </>
-            )}
-          </Button>
-          <Button onClick={generatePDF} disabled={isGenerating}>
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generating PDF...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4" />
-                Download PDF
-              </>
-            )}
-          </Button>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-2">
+          <h1 className="font-bold gradient-title text-5xl md:text-6xl">
+            Resume Builder
+          </h1>
+        </div>
+        <div className="flex flex-col md:flex-row md:items-end gap-4 w-full">
+          <div className="flex-1">
+            <label className="text-sm font-medium">Resume Name</label>
+            <Input
+              value={resumeName}
+              onChange={(e) => setResumeName(e.target.value)}
+              placeholder="Enter a name for your resume"
+              className="w-full"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              onClick={() => handleSave()}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save
+                </>
+              )}
+            </Button>
+
+            <Button onClick={generatePDF} disabled={isGenerating}>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="edit">Form</TabsTrigger>
           <TabsTrigger value="preview">Markdown</TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form className="space-y-8">
             {/* Contact Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Contact Information</h3>
