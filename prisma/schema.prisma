@@ -8,68 +8,216 @@ datasource db {
 }
 
 model User {
-  id          String        @id @default(uuid())
-  clerkUserId String        @unique
-  email       String        @unique
-  firstName   String?
-  lastName    String?
-  imageUrl    String?
+  id               String           @id @default(uuid())
+  clerkUserId      String           @unique
+  email            String           @unique
+  firstName        String?
+  lastName         String?
+  imageUrl         String?
+  isOnboarded      Boolean          @default(false)
 
-  bio           String?
-  experience    Int?
-  skills        String[]
-  industry      String?
-  subIndustries String[]
+  mobile           String?
+  location         String?
+  linkedin         String?
+  github           String?
+  portfolio        String?
 
-  assessments Assessment[]
-  resume      Resume?
-  coverLetter CoverLetter[]
+  bio              String?
+  experience       Int?
+  skills           String[]
+  industry         String?
+  subIndustries    String[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  resumes          Resume[]
+  experiences      Experience[]
+  education        Education[]
+  projects         Project[]
+  achievements     Achievement[]
 
-model Assessment {
-  id             String  @id @default(cuid())
-  userId         String
-  user           User    @relation(fields: [userId], references: [id])
-  quizScore      Float
-  questions      Json[]
-  category       String
-  improvementTip String?
+  assessments      Assessment[]
+  coverLetters     CoverLetter[]
+  jobApplications  JobApplication[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
 model Resume {
-  id       String  @id @default(cuid())
-  userId   String  @unique
-  user     User    @relation(fields: [userId], references: [id])
-  content  String  @db.Text
-  atsScore Float?
-  feedback String?
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  
+  name             String
+  summary          String?
+  skills           String[]
+  isDefault        Boolean          @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  atsScore         Float?
+  feedback         String?
+
+  // Optional overrides
+  email            String?
+  mobile           String?
+  location         String?
+  linkedin         String?
+  github           String?
+  portfolio        String?
+
+  experiences      Experience[]
+  education        Education[]
+  projects         Project[]
+  achievements     Achievement[]
+
+  jobApplication   JobApplication[]  @relation("ResumeToApplication")
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([userId])
+  @@unique([userId, name])
+}
+
+model Experience {
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  resumeId         String?
+  resume           Resume?       @relation(fields: [resumeId], references: [id])
+
+  title            String
+  company          String
+  location         String?
+  startDate        DateTime
+  endDate          DateTime?
+  isCurrent        Boolean       @default(false)
+  description      String?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model Education {
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  resumeId         String?
+  resume           Resume?       @relation(fields: [resumeId], references: [id])
+
+  institution      String
+  degree           String
+  startDate        DateTime
+  endDate          DateTime?
+  grade            String?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model Project {
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  resumeId         String?
+  resume           Resume?       @relation(fields: [resumeId], references: [id])
+
+  title            String
+  summary          String?
+  link             String?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model Achievement {
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  resumeId         String?
+  resume           Resume?       @relation(fields: [resumeId], references: [id])
+
+  text             String
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+
+model CoverLetter {
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  
+  name             String
+  content          String
+  jobDescription   String?
+  companyName      String?
+  jobTitle         String?
+  status           String           @default("draft")
+  isDefault        Boolean          @default(false)
+
+  jobApplication   JobApplication[]  @relation("CoverLetterToApplication")
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([userId])
+  @@unique([userId, name])
+}
+
+model JobApplication {
+  id                 String                   @id @default(cuid())
+  userId             String
+  user               User                     @relation(fields: [userId], references: [id])
+
+  resumeId           String?
+  resume             Resume?                  @relation("ResumeToApplication", fields: [resumeId], references: [id])
+
+  coverLetterId      String?
+  coverLetter        CoverLetter?             @relation("CoverLetterToApplication", fields: [coverLetterId], references: [id])
+
+  companyName        String
+  jobTitle           String
+  companyUrl         String?
+  companyDescription String?
+  jobPostUrl         String
+  jobDescription     String
+
+  timelineEntries    JobApplicationTimeline[]
+
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   @@index([userId])
 }
 
-model CoverLetter {
-  id             String  @id @default(cuid())
-  userId         String
-  user           User    @relation(fields: [userId], references: [id])
-  content        String
-  jobDescription String?
-  companyName    String
-  jobTitle       String
-  status         String  @default("draft")
+model JobApplicationTimeline {
+  id               String           @id @default(cuid())
+  jobApplicationId String
+  jobApplication   JobApplication   @relation(fields: [jobApplicationId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  title            String?
+  date             DateTime         @default(now())
+  stage            String
+  contactPerson    String?
+  notes            String?
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([jobApplicationId])
+}
+
+model Assessment {
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  quizScore        Float
+  questions        Json[]
+  category         String
+  improvementTip   String?
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([userId])
 }
