@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/prisma';
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
@@ -16,7 +17,28 @@ export default clerkMiddleware(async (auth, req) => {
     return redirectToSignIn()
   }
 
-  return NextResponse.next()
+  if (userId) {
+    const user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+      select: { isOnboarded: true },
+    });
+
+    const isOnboardingRoute = req.nextUrl.pathname.startsWith('/onboarding');
+
+    if (!user?.isOnboarded && !isOnboardingRoute) {
+      const onboardingUrl = req.nextUrl.clone();
+      onboardingUrl.pathname = '/onboarding';
+      return NextResponse.redirect(onboardingUrl);
+    }
+
+    if (user?.isOnboarded && isOnboardingRoute) {
+      const dashboardUrl = req.nextUrl.clone();
+      dashboardUrl.pathname = '/dashboard';
+      return NextResponse.redirect(dashboardUrl);
+    }
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {

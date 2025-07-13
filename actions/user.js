@@ -22,6 +22,11 @@ export async function updateUser(data) {
             id: user.id,
           },
           data: {
+            mobile: data.mobile,
+            location: data.location,
+            linkedin: data.linkedin,
+            github: data.github,
+            portfolio: data.portfolio,
             industry: data.industry,
             subIndustries: {
               set: data.subIndustries
@@ -30,7 +35,8 @@ export async function updateUser(data) {
             bio: data.bio,
             skills: {
               set: data.skills
-            }
+            },
+            isOnboarded: true,
           },
         });
 
@@ -42,9 +48,9 @@ export async function updateUser(data) {
     );
 
     revalidatePath("/");
-    return result.user;
+    return result.updatedUser;
   } catch (error) {
-    console.error("Error updating user and industry:", error.message);
+    console.error("Error updating user:", error.message);
     throw new Error("Failed to update profile");
   }
 }
@@ -53,24 +59,20 @@ export async function getUserOnboardingStatus() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
-
-  if (!user) throw new Error("User not found");
-
   try {
     const user = await db.user.findUnique({
-      where: {
-        clerkUserId: userId,
-      },
+      where: { clerkUserId: userId },
       select: {
-        industry: true,
+        isOnboarded: true,
+        email: true,
       },
     });
 
+    if (!user) throw new Error("User not found");
+
     return {
-      isOnboarded: !!user?.industry,
+      isOnboarded: user.isOnboarded,
+      email: user.email || null,
     };
   } catch (error) {
     console.error("Error checking onboarding status:", error);

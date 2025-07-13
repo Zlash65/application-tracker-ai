@@ -4,7 +4,7 @@ import OnboardingForm from "./_components/onboarding-form";
 import { getUserOnboardingStatus } from "@/actions/user";
 
 export default async function OnboardingPage() {
-  const { isOnboarded } = await getUserOnboardingStatus();
+  const { isOnboarded, email } = await getUserOnboardingStatus();
 
   if (isOnboarded) {
     redirect("/dashboard");
@@ -12,7 +12,7 @@ export default async function OnboardingPage() {
 
   return (
     <main>
-      <OnboardingForm industries={industries} />
+      <OnboardingForm industries={industries} email={email} />
     </main>
   );
 }
